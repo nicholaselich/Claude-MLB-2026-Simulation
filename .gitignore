@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Simulation outputs
+simulation_results.csv
+ws_probabilities.png
+al_east_race.png
+*.png
+*.csv
+
+# Data files (too large / proprietary)
+data/hitters.json
+data/pitchers.json
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
