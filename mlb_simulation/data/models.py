@@ -158,8 +158,9 @@ class TeamProfile:
 
     team_id: int
     team_name: str
-    offense_rpg: float    # projected runs scored per game
-    defense_rpg: float    # projected runs allowed per game
+    offense_rpg: float    # projected runs scored per game (park-neutral)
+    defense_rpg: float    # projected runs allowed per game (park-neutral)
+    park_factor: float = 1.0  # venue run-scoring multiplier; applied to both teams
 
     def pythag_wpct(self, exponent: float = 1.83) -> float:
         o, d = self.offense_rpg ** exponent, self.defense_rpg ** exponent

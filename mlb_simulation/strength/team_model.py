@@ -18,6 +18,42 @@ HOME_ADV_FACTOR: float = 1.03
 STARTER_IP: float = 5.5   # average innings per game from starters
 BULLPEN_IP: float = 3.5   # average innings per game from bullpen
 
+# 5-year park factors, FanGraphs 2025 (source: fangraphs.com/guts.aspx?type=pf&season=2025)
+# Values >1.0 favour hitters; <1.0 favour pitchers; 1.0 = neutral.
+# Both teams' expected run totals are multiplied by the home park factor.
+PARK_FACTORS: dict[str, float] = {
+    "ARI": 1.01,  # Chase Field
+    "ATL": 1.00,  # Truist Park
+    "BAL": 0.99,  # Camden Yards
+    "BOS": 1.04,  # Fenway Park
+    "CHC": 0.98,  # Wrigley Field
+    "CIN": 1.05,  # Great American Ball Park
+    "CLE": 0.99,  # Progressive Field
+    "COL": 1.13,  # Coors Field
+    "CWS": 1.00,  # Guaranteed Rate Field
+    "DET": 1.00,  # Comerica Park
+    "HOU": 0.99,  # Minute Maid Park
+    "KC":  1.03,  # Kauffman Stadium
+    "LAA": 1.01,  # Angel Stadium
+    "LAD": 0.99,  # Dodger Stadium
+    "MIA": 1.01,  # loanDepot park
+    "MIL": 0.99,  # American Family Field
+    "MIN": 1.01,  # Target Field
+    "NYM": 0.96,  # Citi Field
+    "NYY": 0.99,  # Yankee Stadium
+    "ATH": 1.03,  # Sutter Health Park / future Las Vegas ballpark
+    "PHI": 1.01,  # Citizens Bank Park
+    "PIT": 1.02,  # PNC Park
+    "SD":  0.96,  # Petco Park
+    "SEA": 0.94,  # T-Mobile Park
+    "SF":  0.97,  # Oracle Park
+    "STL": 0.98,  # Busch Stadium
+    "TB":  1.01,  # Tropicana Field
+    "TEX": 0.99,  # Globe Life Field
+    "TOR": 0.99,  # Rogers Centre
+    "WSH": 1.00,  # Nationals Park
+}
+
 
 class TeamStrengthModel:
     """Convert ``TeamProjections`` to ``TeamProfile`` objects.
@@ -73,11 +109,14 @@ class TeamStrengthModel:
                 ) / 9.0
                 defense_rpg = (blend_fip / LEAGUE_AVG_FIP) * LEAGUE_AVG_RPG
 
+            park_factor = PARK_FACTORS.get(abbrev, 1.0)
+
             profiles[team_id] = TeamProfile(
                 team_id=team_id,
                 team_name=team_name,
                 offense_rpg=offense_rpg,
                 defense_rpg=defense_rpg,
+                park_factor=park_factor,
             )
 
         return profiles

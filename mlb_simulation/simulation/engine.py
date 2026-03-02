@@ -75,12 +75,18 @@ class SimulationEngine:
 
         # Interaction model: team offense vs opponent defense, scaled to league avg
         if home_prof and away_prof:
+            park_factor = home_prof.park_factor
             home_exp = (
                 home_prof.offense_rpg
                 * (away_prof.defense_rpg / LEAGUE_AVG_RPG)
                 * HOME_ADV_FACTOR
+                * park_factor
             )
-            away_exp = away_prof.offense_rpg * (home_prof.defense_rpg / LEAGUE_AVG_RPG)
+            away_exp = (
+                away_prof.offense_rpg
+                * (home_prof.defense_rpg / LEAGUE_AVG_RPG)
+                * park_factor
+            )
         else:
             home_exp = away_exp = LEAGUE_AVG_RPG
 
