@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from mlb_simulation.data.models import GameResult, Schedule, TeamProfile, TeamStats
-from mlb_simulation.strength.team_model import HOME_ADV_FACTOR, LEAGUE_AVG_RPG
+from mlb_simulation.strength.team_model import HOME_ADV_FACTOR, LEAGUE_AVG_RPG, game_defense_rpg
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +50,7 @@ class SimulationEngine:
             random.seed(random_seed)
             np.random.seed(random_seed)
         self._results: list[GameResult] = []
+        self._rotation_idx: dict[int, int] = {}  # team_id → games started so far
 
     # ------------------------------------------------------------------
     # Core simulation method
@@ -76,17 +77,23 @@ class SimulationEngine:
         # Interaction model: team offense vs opponent defense, scaled to league avg
         if home_prof and away_prof:
             park_factor = home_prof.park_factor
+            home_slot = self._rotation_idx.get(home_id, 0)
+            away_slot = self._rotation_idx.get(away_id, 0)
+            home_def_rpg = game_defense_rpg(home_prof, home_slot)
+            away_def_rpg = game_defense_rpg(away_prof, away_slot)
             home_exp = (
                 home_prof.offense_rpg
-                * (away_prof.defense_rpg / LEAGUE_AVG_RPG)
+                * (away_def_rpg / LEAGUE_AVG_RPG)
                 * HOME_ADV_FACTOR
                 * park_factor
             )
             away_exp = (
                 away_prof.offense_rpg
-                * (home_prof.defense_rpg / LEAGUE_AVG_RPG)
+                * (home_def_rpg / LEAGUE_AVG_RPG)
                 * park_factor
             )
+            self._rotation_idx[home_id] = home_slot + 1
+            self._rotation_idx[away_id] = away_slot + 1
         else:
             home_exp = away_exp = LEAGUE_AVG_RPG
 

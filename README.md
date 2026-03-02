@@ -33,20 +33,102 @@ PlayoffSimulator (2022+ bracket)
 Standings table + charts
 ```
 
-## Sample output
+## 2026 Projections
 
-```
-────────────────────────────────────────────────────────────
- National League West
-────────────────────────────────────────────────────────────
-Team                           W     L     W%    Div%   Playoff%    WS%
-────────────────────────────────────────────────────────────
- Los Angeles Dodgers        93.4  68.6   .577  69.2%     93.4%  12.2%
- Arizona Diamondbacks       84.6  77.4   .522  12.6%     51.8%   3.9%
- San Francisco Giants       83.3  78.7   .514  10.0%     48.5%   3.2%
- San Diego Padres           82.9  79.1   .512   8.2%     43.1%   3.0%
- Colorado Rockies           61.0 101.0   .377   0.0%      0.0%   0.0%
-```
+_1,000-simulation Monte Carlo average — FanGraphs Steamer projections, March 2026_
+
+### American League
+
+**AL East**
+| Team | W | L | W% | Div% | Playoff% | WS% |
+|------|---|---|----|------|----------|-----|
+| Toronto Blue Jays | 87.9 | 74.1 | .543 | 35.2% | 73.5% | 7.8% |
+| New York Yankees | 85.5 | 76.5 | .528 | 22.4% | 61.0% | 5.1% |
+| Baltimore Orioles | 84.4 | 77.6 | .521 | 18.6% | 54.4% | 3.9% |
+| Boston Red Sox | 83.8 | 78.2 | .517 | 18.1% | 52.6% | 3.7% |
+| Tampa Bay Rays | 79.1 | 82.9 | .488 | 5.7% | 22.1% | 0.7% |
+
+**AL Central**
+| Team | W | L | W% | Div% | Playoff% | WS% |
+|------|---|---|----|------|----------|-----|
+| Detroit Tigers | 84.2 | 77.8 | .520 | 46.0% | 59.2% | 4.4% |
+| Kansas City Royals | 81.1 | 80.9 | .501 | 23.7% | 36.4% | 2.0% |
+| Minnesota Twins | 80.6 | 81.4 | .498 | 21.0% | 33.1% | 1.4% |
+| Cleveland Guardians | 76.8 | 85.2 | .474 | 8.1% | 14.8% | 0.5% |
+| Chicago White Sox | 69.8 | 92.2 | .431 | 1.2% | 2.8% | 0.0% |
+
+**AL West**
+| Team | W | L | W% | Div% | Playoff% | WS% |
+|------|---|---|----|------|----------|-----|
+| Seattle Mariners | 90.9 | 71.1 | .561 | 70.3% | 89.0% | 13.4% |
+| Texas Rangers | 82.8 | 79.2 | .511 | 13.0% | 43.2% | 2.9% |
+| Houston Astros | 82.4 | 79.6 | .509 | 13.2% | 42.3% | 2.3% |
+| Athletics | 76.4 | 85.6 | .472 | 2.7% | 12.1% | 0.1% |
+| Los Angeles Angels | 72.2 | 89.8 | .446 | 0.8% | 3.5% | 0.0% |
+
+### National League
+
+**NL East**
+| Team | W | L | W% | Div% | Playoff% | WS% |
+|------|---|---|----|------|----------|-----|
+| Atlanta Braves | 90.0 | 72.0 | .555 | 48.7% | 82.1% | 9.1% |
+| New York Mets | 88.6 | 73.4 | .547 | 37.6% | 76.0% | 7.4% |
+| Philadelphia Phillies | 83.3 | 78.7 | .514 | 12.5% | 45.0% | 3.6% |
+| Miami Marlins | 76.3 | 85.7 | .471 | 1.0% | 9.8% | 0.3% |
+| Washington Nationals | 70.6 | 91.4 | .436 | 0.2% | 1.6% | 0.0% |
+
+**NL Central**
+| Team | W | L | W% | Div% | Playoff% | WS% |
+|------|---|---|----|------|----------|-----|
+| Chicago Cubs | 84.4 | 77.6 | .521 | 45.9% | 57.5% | 2.7% |
+| Milwaukee Brewers | 80.5 | 81.5 | .497 | 21.9% | 33.3% | 1.0% |
+| Pittsburgh Pirates | 79.8 | 82.2 | .493 | 17.5% | 28.3% | 0.3% |
+| St. Louis Cardinals | 77.9 | 84.1 | .481 | 10.8% | 20.0% | 0.7% |
+| Cincinnati Reds | 74.8 | 87.2 | .462 | 3.9% | 7.9% | 0.0% |
+
+**NL West**
+| Team | W | L | W% | Div% | Playoff% | WS% |
+|------|---|---|----|------|----------|-----|
+| Los Angeles Dodgers | 94.9 | 67.1 | .586 | 76.0% | 95.8% | 18.4% |
+| Arizona Diamondbacks | 84.7 | 77.3 | .523 | 10.6% | 54.8% | 3.3% |
+| San Francisco Giants | 83.8 | 78.2 | .517 | 8.1% | 48.5% | 3.1% |
+| San Diego Padres | 82.2 | 79.8 | .507 | 5.3% | 39.4% | 1.9% |
+| Colorado Rockies | 60.1 | 101.9 | .371 | 0.0% | 0.0% | 0.0% |
+
+### World Series odds (all 30 teams)
+
+| Team | WS% |
+|------|-----|
+| Los Angeles Dodgers | 18.4% |
+| Seattle Mariners | 13.4% |
+| Atlanta Braves | 9.1% |
+| Toronto Blue Jays | 7.8% |
+| New York Mets | 7.4% |
+| New York Yankees | 5.1% |
+| Detroit Tigers | 4.4% |
+| Baltimore Orioles | 3.9% |
+| Boston Red Sox | 3.7% |
+| Philadelphia Phillies | 3.6% |
+| Arizona Diamondbacks | 3.3% |
+| San Francisco Giants | 3.1% |
+| Texas Rangers | 2.9% |
+| Chicago Cubs | 2.7% |
+| Houston Astros | 2.3% |
+| Kansas City Royals | 2.0% |
+| San Diego Padres | 1.9% |
+| Minnesota Twins | 1.4% |
+| Milwaukee Brewers | 1.0% |
+| St. Louis Cardinals | 0.7% |
+| Tampa Bay Rays | 0.7% |
+| Cleveland Guardians | 0.5% |
+| Miami Marlins | 0.3% |
+| Pittsburgh Pirates | 0.3% |
+| Athletics | 0.1% |
+| Chicago White Sox | 0.0% |
+| Cincinnati Reds | 0.0% |
+| Colorado Rockies | 0.0% |
+| Los Angeles Angels | 0.0% |
+| Washington Nationals | 0.0% |
 
 ## Setup
 

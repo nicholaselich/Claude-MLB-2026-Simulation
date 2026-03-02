@@ -159,8 +159,10 @@ class TeamProfile:
     team_id: int
     team_name: str
     offense_rpg: float    # projected runs scored per game (park-neutral)
-    defense_rpg: float    # projected runs allowed per game (park-neutral)
+    defense_rpg: float    # projected runs allowed per game (park-neutral, blended rotation)
     park_factor: float = 1.0  # venue run-scoring multiplier; applied to both teams
+    rotation: list = field(default_factory=list)  # individual starter FIPs, best→worst
+    bullpen_fip: float = 4.20  # IP-weighted bullpen FIP for per-game blending
 
     def pythag_wpct(self, exponent: float = 1.83) -> float:
         o, d = self.offense_rpg ** exponent, self.defense_rpg ** exponent

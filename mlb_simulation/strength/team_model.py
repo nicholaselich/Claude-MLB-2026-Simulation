@@ -55,6 +55,19 @@ PARK_FACTORS: dict[str, float] = {
 }
 
 
+def game_defense_rpg(profile: TeamProfile, starter_slot: int = 0) -> float:
+    """Compute per-game defense RPG using the team's rotation slot (0 = ace).
+
+    Blends the slot's starter FIP with bullpen FIP, then scales to RPG.
+    Falls back to the pre-blended ``defense_rpg`` if no rotation is stored.
+    """
+    if not profile.rotation:
+        return profile.defense_rpg
+    starter_fip = profile.rotation[starter_slot % len(profile.rotation)]
+    blend = (starter_fip * STARTER_IP + profile.bullpen_fip * BULLPEN_IP) / 9.0
+    return (blend / LEAGUE_AVG_FIP) * LEAGUE_AVG_RPG
+
+
 class TeamStrengthModel:
     """Convert ``TeamProjections`` to ``TeamProfile`` objects.
 
@@ -117,6 +130,8 @@ class TeamStrengthModel:
                 offense_rpg=offense_rpg,
                 defense_rpg=defense_rpg,
                 park_factor=park_factor,
+                rotation=proj.rotation_fips if proj else [],
+                bullpen_fip=proj.bullpen_fip if proj else LEAGUE_AVG_FIP,
             )
 
         return profiles

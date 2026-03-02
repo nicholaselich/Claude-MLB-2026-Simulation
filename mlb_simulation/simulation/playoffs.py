@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 
 from mlb_simulation.data.models import TeamProfile
-from mlb_simulation.strength.team_model import HOME_ADV_FACTOR
+from mlb_simulation.strength.team_model import HOME_ADV_FACTOR, LEAGUE_AVG_RPG, game_defense_rpg
 
 # Home/away pattern per game slot for each series format.
 # True = higher seed (team_a) is at home; False = lower seed (team_b) is at home.
@@ -93,22 +93,32 @@ class PlayoffSimulator:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _game_win_prob(self, team_a_id: int, team_b_id: int, team_a_home: bool) -> float:
-        """Win probability for team_a in a single game."""
+    def _game_win_prob(
+        self, team_a_id: int, team_b_id: int, team_a_home: bool, game_num: int = 0
+    ) -> float:
+        """Win probability for team_a in a single game.
+
+        Uses rotation-slot-aware defense: game_num=0 → ace, game_num=1 → #2, etc.
+        Both teams reset to their ace (slot 0) for game 1 of each series.
+        """
         prof_a = self._profiles.get(team_a_id)
         prof_b = self._profiles.get(team_b_id)
 
-        p_a = prof_a.pythag_wpct() if prof_a else 0.5
-        p_b = prof_b.pythag_wpct() if prof_b else 0.5
-
-        p_neutral = p_a / (p_a + p_b) if (p_a + p_b) > 0 else 0.5
-
-        if team_a_home:
-            p_adj = p_neutral * HOME_ADV_FACTOR
+        if prof_a and prof_b:
+            def_rpg_a = game_defense_rpg(prof_a, game_num)
+            def_rpg_b = game_defense_rpg(prof_b, game_num)
+            exp_a = prof_a.offense_rpg * (def_rpg_b / LEAGUE_AVG_RPG)
+            exp_b = prof_b.offense_rpg * (def_rpg_a / LEAGUE_AVG_RPG)
+            if team_a_home:
+                exp_a *= HOME_ADV_FACTOR
+            else:
+                exp_b *= HOME_ADV_FACTOR
+            exponent = 1.83
+            p_a = exp_a ** exponent / (exp_a ** exponent + exp_b ** exponent)
         else:
-            p_adj = p_neutral / HOME_ADV_FACTOR
+            p_a = 0.55 if team_a_home else 0.45
 
-        return float(np.clip(p_adj, 0.01, 0.99))
+        return float(np.clip(p_a, 0.01, 0.99))
 
     def _simulate_series(
         self, team_a_id: int, team_b_id: int, games_in_series: int
@@ -125,7 +135,7 @@ class PlayoffSimulator:
 
         while wins_a < wins_needed and wins_b < wins_needed:
             team_a_home = home_pattern[game_num % len(home_pattern)]
-            p_a = self._game_win_prob(team_a_id, team_b_id, team_a_home)
+            p_a = self._game_win_prob(team_a_id, team_b_id, team_a_home, game_num)
             if np.random.random() < p_a:
                 wins_a += 1
             else:

@@ -17,6 +17,7 @@ class TeamProjections:
     bullpen_fip: float
     starter_ip: float
     bullpen_ip: float
+    rotation_fips: list  # individual starter FIPs sorted best→worst (FIP ascending, GS≥10)
 
 
 class ProjectionsAggregator:
@@ -66,6 +67,11 @@ class ProjectionsAggregator:
         for team, grp in bullpen.groupby("Team"):
             bullpen_by_team[team] = _ip_weighted_fip(grp)
 
+        # Rotation: starters with GS >= 10, sorted by FIP ascending (best first)
+        rotation_by_team: dict[str, list] = {}
+        for team, grp in starters[starters["GS"] >= 10].groupby("Team"):
+            rotation_by_team[team] = grp.sort_values("FIP")["FIP"].tolist()
+
         all_teams = set(wrc_by_team) | set(starter_by_team) | set(bullpen_by_team)
 
         for team in sorted(all_teams):
@@ -80,6 +86,7 @@ class ProjectionsAggregator:
                 bullpen_fip=bp_fip,
                 starter_ip=sp_ip,
                 bullpen_ip=bp_ip,
+                rotation_fips=rotation_by_team.get(team, []),
             )
 
         return result
