@@ -24,6 +24,8 @@ def build_standings_df(probabilities: list[SeasonProbabilities]) -> pd.DataFrame
                 "win_pct": round(sp.avg_wins / (sp.avg_wins + sp.avg_losses), 3)
                 if (sp.avg_wins + sp.avg_losses) > 0
                 else 0.0,
+                "p10_wins": int(round(sp.p10_wins)),
+                "p90_wins": int(round(sp.p90_wins)),
                 "div_title_pct": round(sp.div_title_pct, 1),
                 "playoff_pct": round(sp.playoff_pct, 1),
                 "ws_win_pct": round(sp.ws_win_pct, 1),
@@ -68,18 +70,19 @@ def print_standings(
 
 
 def _print_division_table(division: str, df: pd.DataFrame) -> None:
-    header = f"\n{'─' * 60}"
+    header = f"\n{'─' * 72}"
     col_header = (
         f"{'Team':<26} {'W':>5} {'L':>5}  {'W%':>5}  "
-        f"{'Div%':>6}  {'Playoff%':>9}  {'WS%':>5}"
+        f"{'Div%':>6}  {'Playoff%':>9}  {'WS%':>5}  {'Range':>7}"
     )
     print(header)
     print(f" {division}")
-    print(f"{'─' * 60}")
+    print(f"{'─' * 72}")
     print(col_header)
-    print(f"{'─' * 60}")
+    print(f"{'─' * 72}")
     for _, row in df.iterrows():
         w_pct = f".{int(row['win_pct'] * 1000):03d}"
+        win_range = f"{row['p10_wins']}–{row['p90_wins']}"
         print(
             f" {row['team_name']:<25} "
             f"{row['avg_wins']:>5.1f} "
@@ -87,5 +90,6 @@ def _print_division_table(division: str, df: pd.DataFrame) -> None:
             f"{w_pct:>5}  "
             f"{row['div_title_pct']:>5.1f}%  "
             f"{row['playoff_pct']:>8.1f}%  "
-            f"{row['ws_win_pct']:>4.1f}%"
+            f"{row['ws_win_pct']:>4.1f}%  "
+            f"{win_range:>7}"
         )

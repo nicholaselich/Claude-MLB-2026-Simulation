@@ -59,13 +59,43 @@ class ProjectionsAggregator:
             fip = float((grp["FIP"] * grp["IP"]).sum() / total_ip)
             return fip, float(total_ip)
 
+        def _leverage_adjusted_fip(grp: pd.DataFrame) -> tuple[float, float]:
+            """Leverage-adjusted bullpen FIP: best arms get higher weight.
+
+            Closer (best FIP, IP≥15): 1.0 IP weight
+            Setup x2 (next two by FIP, IP≥15): 0.5 IP weight each
+            Middle/mop-up: IP-weighted for remaining 1.5 of 3.5 total IP
+
+            Upweighting the top arms models that closers and setup men face
+            batters in high-leverage situations, not just any inning.
+            """
+            total_ip = float(grp["IP"].sum())
+            qual = grp[grp["IP"] >= 15].sort_values("FIP").reset_index(drop=True)
+            if len(qual) == 0:
+                return _ip_weighted_fip(grp)
+
+            lev_weights = [1.0, 0.5, 0.5]   # closer, setup1, setup2
+            n = min(len(qual), len(lev_weights))
+            weighted = sum(qual.iloc[i]["FIP"] * lev_weights[i] for i in range(n))
+            assigned = sum(lev_weights[:n])
+            remaining = 3.5 - assigned
+
+            if len(qual) > n:
+                rest = qual.iloc[n:]
+                rest_fip = float((rest["FIP"] * rest["IP"]).sum() / rest["IP"].sum())
+                weighted += rest_fip * remaining
+            else:
+                weighted += qual.iloc[n - 1]["FIP"] * remaining
+
+            return weighted / 3.5, total_ip
+
         starter_by_team: dict[str, tuple[float, float]] = {}
         for team, grp in starters.groupby("Team"):
             starter_by_team[team] = _ip_weighted_fip(grp)
 
         bullpen_by_team: dict[str, tuple[float, float]] = {}
         for team, grp in bullpen.groupby("Team"):
-            bullpen_by_team[team] = _ip_weighted_fip(grp)
+            bullpen_by_team[team] = _leverage_adjusted_fip(grp)
 
         # Rotation: starters with GS >= 10, sorted by FIP ascending (best first)
         rotation_by_team: dict[str, list] = {}

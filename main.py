@@ -104,8 +104,18 @@ def main() -> None:
     )
     probabilities = mc.run()
 
-    # ── 5. Print standings ────────────────────────────────────────────
+    # ── 5. Print standings + WS matchup table ────────────────────────
     print_standings(probabilities)
+
+    sep = "─" * 68
+    print(f"\n{sep}")
+    print(" Most Likely World Series Matchups")
+    print(sep)
+    print(f" {'AL Champion':<27}  {'NL Champion':<27}  {'Pct':>5}")
+    print(sep)
+    for al_name, nl_name, pct in mc.top_matchups(n=8):
+        print(f" {al_name:<27}  {nl_name:<27}  {pct:>4.1f}%")
+    print(sep)
 
     # Machine-readable version
     standings_df = build_standings_df(probabilities)

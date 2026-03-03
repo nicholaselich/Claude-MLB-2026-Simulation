@@ -31,6 +31,8 @@ class SeasonProbabilities:
     league_name: str
     avg_wins: float = 0.0
     avg_losses: float = 0.0
+    p10_wins: float = 0.0         # 10th-percentile wins (floor of likely range)
+    p90_wins: float = 0.0         # 90th-percentile wins (ceiling of likely range)
     div_title_pct: float = 0.0    # fraction of sims where team won its division
     playoff_pct: float = 0.0      # fraction of sims where team made playoffs
     ws_win_pct: float = 0.0       # fraction of sims where team won World Series
@@ -84,18 +86,11 @@ class MonteCarloSeasonSimulator:
     def run(self) -> list[SeasonProbabilities]:
         """Execute all simulations and return per-team probabilities."""
         # Accumulation counters
-        wins_total: dict[int, float] = {}
-        losses_total: dict[int, float] = {}
-        div_titles: dict[int, int] = {}
-        playoff_apps: dict[int, int] = {}
-        ws_wins: dict[int, int] = {}
-
-        for team_id in self._team_info:
-            wins_total[team_id] = 0.0
-            losses_total[team_id] = 0.0
-            div_titles[team_id] = 0
-            playoff_apps[team_id] = 0
-            ws_wins[team_id] = 0
+        all_wins: dict[int, list] = {tid: [] for tid in self._team_info}
+        div_titles: dict[int, int] = {tid: 0 for tid in self._team_info}
+        playoff_apps: dict[int, int] = {tid: 0 for tid in self._team_info}
+        ws_wins: dict[int, int] = {tid: 0 for tid in self._team_info}
+        ws_matchup_counts: dict[tuple, int] = {}
 
         logger.info("Starting %d Monte Carlo simulations …", self.n_simulations)
 
@@ -104,14 +99,17 @@ class MonteCarloSeasonSimulator:
                 logger.info("  Simulation %d / %d …", i + 1, self.n_simulations)
 
             seed = (self.random_seed + i) if self.random_seed is not None else None
-            standings_df, ws_winner_id = self._run_one_simulation(seed)
+            standings_df, ws_winner_id, al_champ_id, nl_champ_id = self._run_one_simulation(seed)
 
-            # Accumulate wins/losses
+            # Track per-sim wins for confidence intervals
             for _, row in standings_df.iterrows():
                 tid = int(row["team_id"])
-                if tid in wins_total:
-                    wins_total[tid] += float(row.get("wins", 0))
-                    losses_total[tid] += float(row.get("losses", 0))
+                if tid in all_wins:
+                    all_wins[tid].append(float(row.get("wins", 0)))
+
+            # Track WS matchups
+            matchup = (al_champ_id, nl_champ_id)
+            ws_matchup_counts[matchup] = ws_matchup_counts.get(matchup, 0) + 1
 
             # Determine division winners + wild cards per league
             al_seeds, nl_seeds = self._get_playoff_seeds(standings_df)
@@ -136,8 +134,11 @@ class MonteCarloSeasonSimulator:
                 ws_wins[ws_winner_id] += 1
 
         n = self.n_simulations
+        self.ws_matchup_counts = ws_matchup_counts
         results: list[SeasonProbabilities] = []
         for team_id, info in self._team_info.items():
+            wins_list = all_wins[team_id]
+            avg_w = float(np.mean(wins_list)) if wins_list else 0.0
             sp = SeasonProbabilities(
                 team_id=team_id,
                 team_name=str(info.get("name", "")),
@@ -145,8 +146,10 @@ class MonteCarloSeasonSimulator:
                 division_name=str(info.get("division_name", "")),
                 league_id=int(info.get("league_id", 0) or 0),
                 league_name=str(info.get("league_name", "")),
-                avg_wins=wins_total[team_id] / n,
-                avg_losses=losses_total[team_id] / n,
+                avg_wins=avg_w,
+                avg_losses=162.0 - avg_w,
+                p10_wins=float(np.percentile(wins_list, 10)) if wins_list else 0.0,
+                p90_wins=float(np.percentile(wins_list, 90)) if wins_list else 0.0,
                 div_title_pct=div_titles[team_id] / n * 100,
                 playoff_pct=playoff_apps[team_id] / n * 100,
                 ws_win_pct=ws_wins[team_id] / n * 100,
@@ -161,12 +164,30 @@ class MonteCarloSeasonSimulator:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _run_one_simulation(self, seed: int | None) -> tuple[pd.DataFrame, int]:
+    def top_matchups(self, n: int = 8) -> list[tuple[str, str, float]]:
+        """Return the top N most frequent World Series matchups.
+
+        Returns a list of (al_team_name, nl_team_name, pct) tuples, sorted
+        by frequency descending. Call after ``run()``.
+        """
+        sorted_matchups = sorted(
+            self.ws_matchup_counts.items(), key=lambda x: x[1], reverse=True
+        )[:n]
+        result = []
+        for (al_id, nl_id), count in sorted_matchups:
+            al_name = self._team_info.get(al_id, {}).get("name", f"Team {al_id}")
+            nl_name = self._team_info.get(nl_id, {}).get("name", f"Team {nl_id}")
+            result.append((al_name, nl_name, count / self.n_simulations * 100))
+        return result
+
+    def _run_one_simulation(
+        self, seed: int | None
+    ) -> tuple[pd.DataFrame, int, int, int]:
         """Run a single season simulation.
 
         Returns
         -------
-        (standings_df, ws_winner_team_id)
+        (standings_df, ws_winner_team_id, al_champ_team_id, nl_champ_team_id)
         """
         engine = SimulationEngine(
             schedule=self.schedule,
@@ -189,8 +210,10 @@ class MonteCarloSeasonSimulator:
         playoff_sim = PlayoffSimulator(self.team_profiles)
         bracket = playoff_sim.simulate_bracket(al_seeds, nl_seeds)
         ws_winner_id = int(bracket["world_series_winner"])
+        al_champ_id = int(bracket["AL"]["lcs_winner"])
+        nl_champ_id = int(bracket["NL"]["lcs_winner"])
 
-        return standings_df, ws_winner_id
+        return standings_df, ws_winner_id, al_champ_id, nl_champ_id
 
     def _get_playoff_seeds(
         self, standings_df: pd.DataFrame

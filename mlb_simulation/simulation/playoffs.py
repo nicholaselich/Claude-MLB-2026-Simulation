@@ -12,7 +12,10 @@ from __future__ import annotations
 import numpy as np
 
 from mlb_simulation.data.models import TeamProfile
-from mlb_simulation.strength.team_model import HOME_ADV_FACTOR, LEAGUE_AVG_RPG, game_defense_rpg
+from mlb_simulation.strength.team_model import (
+    HOME_ADV_FACTOR, LEAGUE_AVG_RPG, game_defense_rpg,
+    PLAYOFF_STARTER_IP, PLAYOFF_BULLPEN_IP, PLAYOFF_ROTATION_DEPTH,
+)
 
 # Home/away pattern per game slot for each series format.
 # True = higher seed (team_a) is at home; False = lower seed (team_b) is at home.
@@ -105,8 +108,12 @@ class PlayoffSimulator:
         prof_b = self._profiles.get(team_b_id)
 
         if prof_a and prof_b:
-            def_rpg_a = game_defense_rpg(prof_a, game_num)
-            def_rpg_b = game_defense_rpg(prof_b, game_num)
+            def_rpg_a = game_defense_rpg(
+                prof_a, game_num, PLAYOFF_STARTER_IP, PLAYOFF_BULLPEN_IP, PLAYOFF_ROTATION_DEPTH
+            )
+            def_rpg_b = game_defense_rpg(
+                prof_b, game_num, PLAYOFF_STARTER_IP, PLAYOFF_BULLPEN_IP, PLAYOFF_ROTATION_DEPTH
+            )
             exp_a = prof_a.offense_rpg * (def_rpg_b / LEAGUE_AVG_RPG)
             exp_b = prof_b.offense_rpg * (def_rpg_a / LEAGUE_AVG_RPG)
             if team_a_home:

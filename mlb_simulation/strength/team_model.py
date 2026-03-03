@@ -18,6 +18,12 @@ HOME_ADV_FACTOR: float = 1.03
 STARTER_IP: float = 5.5   # average innings per game from starters
 BULLPEN_IP: float = 3.5   # average innings per game from bullpen
 
+# Playoff roster adjustments: teams shorten rotation to 3 starters and
+# lean more heavily on their best relievers in October.
+PLAYOFF_STARTER_IP: float = 4.5    # starters go shorter in playoffs
+PLAYOFF_BULLPEN_IP: float = 4.5    # bullpen covers more innings
+PLAYOFF_ROTATION_DEPTH: int = 3    # only top 3 starters used
+
 # 5-year park factors, FanGraphs 2025 (source: fangraphs.com/guts.aspx?type=pf&season=2025)
 # Values >1.0 favour hitters; <1.0 favour pitchers; 1.0 = neutral.
 # Both teams' expected run totals are multiplied by the home park factor.
@@ -55,16 +61,30 @@ PARK_FACTORS: dict[str, float] = {
 }
 
 
-def game_defense_rpg(profile: TeamProfile, starter_slot: int = 0) -> float:
+def game_defense_rpg(
+    profile: TeamProfile,
+    starter_slot: int = 0,
+    starter_ip: float = STARTER_IP,
+    bullpen_ip: float = BULLPEN_IP,
+    rotation_depth: int | None = None,
+) -> float:
     """Compute per-game defense RPG using the team's rotation slot (0 = ace).
 
     Blends the slot's starter FIP with bullpen FIP, then scales to RPG.
     Falls back to the pre-blended ``defense_rpg`` if no rotation is stored.
+
+    Parameters
+    ----------
+    rotation_depth:
+        If set, only use the top N starters (e.g. 3 in playoffs).
+    starter_ip / bullpen_ip:
+        Override the regular-season IP split (e.g. 4.5/4.5 in playoffs).
     """
-    if not profile.rotation:
+    rotation = profile.rotation[:rotation_depth] if rotation_depth else profile.rotation
+    if not rotation:
         return profile.defense_rpg
-    starter_fip = profile.rotation[starter_slot % len(profile.rotation)]
-    blend = (starter_fip * STARTER_IP + profile.bullpen_fip * BULLPEN_IP) / 9.0
+    starter_fip = rotation[starter_slot % len(rotation)]
+    blend = (starter_fip * starter_ip + profile.bullpen_fip * bullpen_ip) / 9.0
     return (blend / LEAGUE_AVG_FIP) * LEAGUE_AVG_RPG
 
 
