@@ -4,18 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>2026 MLB Simulation</title>
-  <!-- Bootstrap 5 dark -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
   >
-  <!-- Plotly (single bundle loaded once) -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  {% if loading %}
-  <meta http-equiv="refresh" content="5">
-  {% endif %}
+  {% if loading %}<meta http-equiv="refresh" content="5">{% endif %}
   <style>
     body { background-color: #0d1117; }
     .navbar-brand { font-weight: 700; letter-spacing: .5px; }
@@ -28,29 +24,24 @@
 <body>
 
 {% if loading %}
-<!-- ─── Loading state ─────────────────────────────────────────── -->
 <div class="d-flex flex-column align-items-center justify-content-center" style="min-height:100vh">
   <div class="spinner-border text-primary mb-4" role="status" style="width:4rem;height:4rem;">
     <span class="visually-hidden">Loading…</span>
   </div>
   <h4 class="text-light mb-2">Running simulations…</h4>
-  <p class="text-secondary">This takes about 3 minutes. Page refreshes automatically every 5 seconds.</p>
+  <p class="text-secondary">This takes about 10 minutes. Page refreshes automatically every 5 seconds.</p>
 </div>
 
 {% elif status == "error" %}
-<!-- ─── Error state ───────────────────────────────────────────── -->
 <div class="container mt-5">
-  <div class="alert alert-danger">
-    <strong>Simulation failed:</strong> {{ error }}
-  </div>
+  <div class="alert alert-danger"><strong>Simulation failed:</strong> {{ error }}</div>
   <form method="post" action="/rerun">
     <button type="submit" class="btn btn-primary">Retry</button>
   </form>
 </div>
 
 {% else %}
-<!-- ─── Dashboard ─────────────────────────────────────────────── -->
-
+<!-- ─── Navbar ─────────────────────────────────────────────────── -->
 <nav class="navbar navbar-dark bg-dark border-bottom border-secondary px-3 py-2">
   <span class="navbar-brand">⚾ 2026 MLB Simulation</span>
   <div class="d-flex align-items-center gap-3">
@@ -65,24 +56,18 @@
 
   <!-- Tab nav -->
   <ul class="nav nav-tabs mb-4" id="dashTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
-              type="button" role="tab">Overview</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="divisions-tab" data-bs-toggle="tab" data-bs-target="#divisions"
-              type="button" role="tab">Divisions</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="heatmap-tab" data-bs-toggle="tab" data-bs-target="#heatmap"
-              type="button" role="tab">Matchup Heatmap</button>
-    </li>
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview"   type="button">Overview</button></li>
+    <li class="nav-item"><button class="nav-link"        data-bs-toggle="tab" data-bs-target="#divisions"  type="button">Divisions</button></li>
+    <li class="nav-item"><button class="nav-link"        data-bs-toggle="tab" data-bs-target="#heatmap"    type="button">Matchup Heatmap</button></li>
+    <li class="nav-item"><button class="nav-link"        data-bs-toggle="tab" data-bs-target="#strength"   type="button">Team Strength</button></li>
+    <li class="nav-item"><button class="nav-link"        data-bs-toggle="tab" data-bs-target="#race"       type="button">Division Race</button></li>
+    <li class="nav-item"><button class="nav-link"        data-bs-toggle="tab" data-bs-target="#bracket"    type="button">Playoff Bracket</button></li>
   </ul>
 
-  <div class="tab-content" id="dashTabsContent">
+  <div class="tab-content">
 
-    <!-- ── Overview tab ─────────────────────────────────────────── -->
-    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+    <!-- ── Overview ──────────────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="overview">
       <div class="row g-4">
         <div class="col-lg-6">
           <div class="card chart-card">
@@ -99,8 +84,8 @@
       </div>
     </div>
 
-    <!-- ── Divisions tab ────────────────────────────────────────── -->
-    <div class="tab-pane fade" id="divisions" role="tabpanel">
+    <!-- ── Divisions ─────────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="divisions">
       <div class="row g-4">
         <div class="col-lg-6">
           <h5 class="text-primary mb-3">American League</h5>
@@ -113,16 +98,82 @@
       </div>
     </div>
 
-    <!-- ── Matchup Heatmap tab ──────────────────────────────────── -->
-    <div class="tab-pane fade" id="heatmap" role="tabpanel">
+    <!-- ── Matchup Heatmap ────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="heatmap">
       <div class="card chart-card">
         <h6 class="text-secondary mb-3">World Series Matchup Probabilities (top 8 teams per league)</h6>
         {{ heatmap_html | safe }}
       </div>
     </div>
 
+    <!-- ── Team Strength scatter ──────────────────────────────────── -->
+    <div class="tab-pane fade" id="strength">
+      <div class="card chart-card">
+        <h6 class="text-secondary mb-3">Offense vs Defense — bubble size = WS probability. Click a team to see their roster.</h6>
+        {{ scatter_html | safe }}
+      </div>
+    </div>
+
+    <!-- ── Division Race ─────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="race">
+      <div class="card chart-card">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <h6 class="text-secondary mb-0">Division Race (one simulated season)</h6>
+          <select id="divisionSelect" class="form-select form-select-sm w-auto bg-dark text-light border-secondary"
+                  onchange="renderRaceChart(this.value)">
+          </select>
+        </div>
+        <div id="race-chart" style="height:450px"></div>
+      </div>
+    </div>
+
+    <!-- ── Playoff Bracket ───────────────────────────────────────── -->
+    <div class="tab-pane fade" id="bracket">
+      <div class="card chart-card">
+        <h6 class="text-secondary mb-3">Playoff Round Probabilities — click a team to see their roster.</h6>
+        {{ playoff_bracket_html | safe }}
+      </div>
+    </div>
+
   </div><!-- /.tab-content -->
 </div><!-- /.container-fluid -->
+
+<!-- ─── Team Detail Modal ─────────────────────────────────────── -->
+<div id="teamModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6)">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;max-width:960px;margin:4vh auto;padding:1.5rem;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h5 id="teamModalLabel" style="color:#f0f6fc;margin:0"></h5>
+      <button onclick="closeModal()" style="background:none;border:none;color:#8b949e;font-size:1.5rem;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <!-- Roster tables -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <h6 style="color:#3b82f6">Top Hitters</h6>
+        <table class="table table-dark table-sm">
+          <thead><tr><th>Player</th><th>PA</th><th>wRC+</th></tr></thead>
+          <tbody id="modal-batters"></tbody>
+        </table>
+      </div>
+      <div class="col-md-4">
+        <h6 style="color:#22c55e">Starting Pitchers</h6>
+        <table class="table table-dark table-sm">
+          <thead><tr><th>Player</th><th>GS</th><th>IP</th><th>FIP</th></tr></thead>
+          <tbody id="modal-starters"></tbody>
+        </table>
+      </div>
+      <div class="col-md-4">
+        <h6 style="color:#f59e0b">Relievers</h6>
+        <table class="table table-dark table-sm">
+          <thead><tr><th>Player</th><th>IP</th><th>FIP</th></tr></thead>
+          <tbody id="modal-relievers"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Win distribution histogram -->
+    <h6 style="color:#a78bfa">Win Distribution ({{ n_simulations }} simulations)</h6>
+    <div id="modal-histogram" style="height:220px"></div>
+  </div>
+</div>
 
 {% endif %}
 
@@ -132,14 +183,129 @@
   crossorigin="anonymous"
 ></script>
 <script>
+  // ── Tab switching ──────────────────────────────────────────────
   document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.nav-link').forEach(function(b) { b.classList.remove('active'); });
       document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('show', 'active'); });
       btn.classList.add('active');
-      document.querySelector(btn.getAttribute('data-bs-target')).classList.add('show', 'active');
+      var target = document.querySelector(btn.getAttribute('data-bs-target'));
+      target.classList.add('show', 'active');
+      // Resize any Plotly charts that just became visible
+      setTimeout(function() {
+        target.querySelectorAll('.js-plotly-plot').forEach(function(div) {
+          Plotly.Plots.resize(div);
+        });
+      }, 50);
     });
   });
+
+  // ── Division race (client-side rendering) ─────────────────────
+  {% if not loading and status == "ready" %}
+  var raceData = {{ race_data_json | safe }};
+  var raceDivisions = Object.keys(raceData).sort();
+
+  // Populate dropdown
+  var sel = document.getElementById('divisionSelect');
+  if (sel) {
+    raceDivisions.forEach(function(d) {
+      var opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderRaceChart(divName) {
+    var traces = (raceData[divName] || []).map(function(t) {
+      return {
+        x: t.x, y: t.y, mode: 'lines', name: t.name,
+        line: { color: t.color, width: 2 },
+        hovertemplate: '<b>' + t.name + '</b><br>Game %{x}<br>Win%: %{y:.3f}<extra></extra>',
+      };
+    });
+    Plotly.react('race-chart', traces, {
+      paper_bgcolor: '#0d1117', plot_bgcolor: '#0d1117',
+      font: { color: '#f0f6fc' },
+      xaxis: { title: 'Game Number', gridcolor: '#30363d' },
+      yaxis: { title: 'Win %', tickformat: '.3f', gridcolor: '#30363d' },
+      shapes: [{ type: 'line', x0: 0, x1: 162, y0: 0.5, y1: 0.5,
+                 line: { dash: 'dash', color: '#8b949e', width: 1 } }],
+      legend: { orientation: 'h', yanchor: 'bottom', y: 1.02, xanchor: 'right', x: 1 },
+      margin: { l: 60, r: 20, t: 40, b: 60 },
+      height: 450,
+    }, { responsive: true, displayModeBar: false });
+  }
+
+  // Render first division when Race tab is clicked
+  document.querySelectorAll('[data-bs-target="#race"]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      setTimeout(function() {
+        var div = document.getElementById('divisionSelect').value || raceDivisions[0];
+        renderRaceChart(div);
+      }, 60);
+    });
+  });
+  {% endif %}
+
+  {% if not loading and status == "ready" %}
+  // ── Data ───────────────────────────────────────────────────────
+  var teamRosters = {{ team_rosters_json | safe }};
+  var winDistributions = {{ win_distributions_json | safe }};
+
+  // ── Team modal ─────────────────────────────────────────────────
+  function showTeamModal(teamName) {
+    var roster = teamRosters[teamName];
+    if (!roster) return;
+    document.getElementById('teamModalLabel').textContent = teamName;
+
+    document.getElementById('modal-batters').innerHTML = roster.batters.map(function(p) {
+      return '<tr><td>' + p.PlayerName + '</td><td>' + p.PA + '</td><td>' + p['wRC+'] + '</td></tr>';
+    }).join('');
+    document.getElementById('modal-starters').innerHTML = roster.starters.map(function(p) {
+      return '<tr><td>' + p.PlayerName + '</td><td>' + p.GS + '</td><td>' + p.IP + '</td><td>' + p.FIP + '</td></tr>';
+    }).join('');
+    document.getElementById('modal-relievers').innerHTML = roster.relievers.map(function(p) {
+      return '<tr><td>' + p.PlayerName + '</td><td>' + p.IP + '</td><td>' + p.FIP + '</td></tr>';
+    }).join('');
+
+    // Win distribution histogram
+    var wins = winDistributions[teamName] || [];
+    if (wins.length) {
+      Plotly.newPlot('modal-histogram', [{
+        x: wins, type: 'histogram', nbinsx: 30,
+        marker: { color: '#a78bfa', opacity: 0.8 },
+        hovertemplate: '%{x} wins: %{y} sims<extra></extra>',
+      }], {
+        paper_bgcolor: '#161b22', plot_bgcolor: '#161b22',
+        font: { color: '#f0f6fc', size: 11 },
+        xaxis: { title: 'Wins', gridcolor: '#30363d' },
+        yaxis: { title: 'Simulations', gridcolor: '#30363d' },
+        margin: { l: 50, r: 20, t: 10, b: 40 },
+        bargap: 0.05,
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    document.getElementById('teamModal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('teamModal').style.display = 'none';
+  }
+  document.getElementById('teamModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ── Plotly click → modal (bars use y=teamName; scatter uses customdata[0]) ──
+  window.addEventListener('load', function() {
+    document.querySelectorAll('.js-plotly-plot').forEach(function(div) {
+      div.on('plotly_click', function(data) {
+        var pt = data.points[0];
+        var teamName = (pt.customdata && pt.customdata[0]) || pt.y || pt.text;
+        if (teamName && teamRosters[teamName]) showTeamModal(teamName);
+      });
+    });
+  });
+  {% endif %}
 </script>
 </body>
 </html>

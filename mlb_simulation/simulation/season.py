@@ -91,6 +91,8 @@ class MonteCarloSeasonSimulator:
         playoff_apps: dict[int, int] = {tid: 0 for tid in self._team_info}
         ws_wins: dict[int, int] = {tid: 0 for tid in self._team_info}
         ws_matchup_counts: dict[tuple, int] = {}
+        wc_wins: dict[int, int] = {tid: 0 for tid in self._team_info}
+        ds_wins: dict[int, int] = {tid: 0 for tid in self._team_info}
 
         logger.info("Starting %d Monte Carlo simulations …", self.n_simulations)
 
@@ -99,7 +101,7 @@ class MonteCarloSeasonSimulator:
                 logger.info("  Simulation %d / %d …", i + 1, self.n_simulations)
 
             seed = (self.random_seed + i) if self.random_seed is not None else None
-            standings_df, ws_winner_id, al_champ_id, nl_champ_id = self._run_one_simulation(seed)
+            standings_df, ws_winner_id, al_champ_id, nl_champ_id, bracket = self._run_one_simulation(seed)
 
             # Track per-sim wins for confidence intervals
             for _, row in standings_df.iterrows():
@@ -110,6 +112,14 @@ class MonteCarloSeasonSimulator:
             # Track WS matchups
             matchup = (al_champ_id, nl_champ_id)
             ws_matchup_counts[matchup] = ws_matchup_counts.get(matchup, 0) + 1
+
+            # Track per-round wins
+            for wc_winner in bracket["AL"]["wild_card"] + bracket["NL"]["wild_card"]:
+                if wc_winner in wc_wins:
+                    wc_wins[wc_winner] += 1
+            for ds_winner in bracket["AL"]["division_series"] + bracket["NL"]["division_series"]:
+                if ds_winner in ds_wins:
+                    ds_wins[ds_winner] += 1
 
             # Determine division winners + wild cards per league
             al_seeds, nl_seeds = self._get_playoff_seeds(standings_df)
@@ -135,6 +145,9 @@ class MonteCarloSeasonSimulator:
 
         n = self.n_simulations
         self.ws_matchup_counts = ws_matchup_counts
+        self.win_distributions = all_wins
+        self.wc_wins = wc_wins
+        self.ds_wins = ds_wins
         results: list[SeasonProbabilities] = []
         for team_id, info in self._team_info.items():
             wins_list = all_wins[team_id]
@@ -213,7 +226,7 @@ class MonteCarloSeasonSimulator:
         al_champ_id = int(bracket["AL"]["lcs_winner"])
         nl_champ_id = int(bracket["NL"]["lcs_winner"])
 
-        return standings_df, ws_winner_id, al_champ_id, nl_champ_id
+        return standings_df, ws_winner_id, al_champ_id, nl_champ_id, bracket
 
     def _get_playoff_seeds(
         self, standings_df: pd.DataFrame
